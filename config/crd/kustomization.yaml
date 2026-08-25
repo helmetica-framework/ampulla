@@ -1,0 +1,6 @@
+resources:
+- bases/backups.helmetica.io_backuppolicies.yaml
+#+kubebuilder:scaffold:crdkustomizeresource
+
+configurations:
+- kustomizeconfig.yaml

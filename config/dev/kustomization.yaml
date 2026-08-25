@@ -1,0 +1,35 @@
+# Runs ampulla in the athanor kind cluster from a locally built image:
+#
+#   just deploy-kind
+#
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../default
+
+images:
+- name: ghcr.io/helmetica-framework/ampulla
+  newTag: dev
+
+patches:
+- target:
+    kind: Deployment
+  patch: |
+    - op: test
+      path: /spec/template/spec/containers/0/name
+      value: manager
+    # The image is loaded into the kind node, there is no registry to pull it from.
+    - op: add
+      path: /spec/template/spec/containers/0/imagePullPolicy
+      value: IfNotPresent
+    # athanor installs these two classes with its garage module, so a BackupPolicy only has
+    # to exist. They are left unset in config/manager on purpose: which object storage a
+    # customer's data ends up in is not a decision to default in a base everyone deploys
+    # from.
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: --default-bucket-class=garage
+    - op: add
+      path: /spec/template/spec/containers/0/args/-
+      value: --default-bucket-access-class=garage

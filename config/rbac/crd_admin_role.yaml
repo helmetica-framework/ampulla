@@ -1,0 +1,19 @@
+# Kubernetes hides custom resources from the built-in admin role unless a ClusterRole opts
+# them in, and a BackupPolicy is written by whoever deploys the service, not by ampulla.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: crd-admin-role
+  labels:
+    rbac.authorization.k8s.io/aggregate-to-admin: "true"
+rules:
+- apiGroups:
+  - backups.helmetica.io
+  resources:
+  - backuppolicies
+  verbs: [create, delete, get, list, patch, update, watch]
+- apiGroups:
+  - backups.helmetica.io
+  resources:
+  - backuppolicies/status
+  verbs: [get]
