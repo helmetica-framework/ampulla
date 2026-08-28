@@ -5,6 +5,17 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - create
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - backups.helmetica.io
   resources:
   - backuppolicies
@@ -27,3 +38,28 @@ rules:
   verbs:
   - create
   - patch
+- apiGroups:
+  - k8up.io
+  resources:
+  - schedules
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - objectstorage.k8s.io
+  resources:
+  - bucketaccesses
+  - bucketclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch

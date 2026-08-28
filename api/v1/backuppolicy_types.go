@@ -145,6 +145,7 @@ type BackupPolicyStatus struct {
 // namespace is the whole scope: the bucket is provisioned for it, the credentials land
 // beside it, and in ModeSchedule every persistent volume in the namespace is backed up.
 // +kubebuilder:object:root=true
+// +kubebuilder:ac:generate=true
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Mode",type=string,JSONPath=`.spec.mode`
 // +kubebuilder:printcolumn:name="Phase",type=string,JSONPath=`.status.phase`

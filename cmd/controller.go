@@ -15,7 +15,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
 	"github.com/helmetica-framework/ampulla/controllers"
+	"github.com/helmetica-framework/ampulla/internal/backup"
 )
 
 var (
@@ -44,6 +46,12 @@ func init() {
 	controllerCmd.Flags().String("metrics-cert-path", "", "The directory that contains the metrics server certificate.")
 	controllerCmd.Flags().String("metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
 	controllerCmd.Flags().String("metrics-cert-key", "tls.key", "The name of the metrics server key file.")
+
+	controllerCmd.Flags().String("default-bucket-class", "", "The COSI BucketClass backup buckets are provisioned from, for instances that name none themselves. Without it, and without .spec.backup.bucketClassName, an instance asking for backups is rejected.")
+	controllerCmd.Flags().String("default-bucket-access-class", "", "The COSI BucketAccessClass the bucket credentials are minted from, for instances that name none themselves.")
+	controllerCmd.Flags().String("default-schedule", backup.DefaultDefaults.Schedules.Backup, "The k8up schedule backups run on, for instances that set none themselves.")
+	controllerCmd.Flags().String("default-prune-schedule", backup.DefaultDefaults.Schedules.Prune, "The k8up schedule old snapshots are pruned on. Empty disables pruning.")
+	controllerCmd.Flags().String("default-check-schedule", backup.DefaultDefaults.Schedules.Check, "The k8up schedule the restic repository is checked on. Empty disables checks.")
 }
 
 var controllerCmd = &cobra.Command{
@@ -59,8 +67,24 @@ func runController(cmd *cobra.Command, _ []string) error {
 	metricsCertName, mcnerr := cmd.Flags().GetString("metrics-cert-name")
 	metricsCertKey, mckerr := cmd.Flags().GetString("metrics-cert-key")
 
-	if err := multierr.Combine(smerr, mcperr, mcnerr, mckerr); err != nil {
+	bucketClass, bcerr := cmd.Flags().GetString("default-bucket-class")
+	bucketAccessClass, bacerr := cmd.Flags().GetString("default-bucket-access-class")
+	schedule, scherr := cmd.Flags().GetString("default-schedule")
+	pruneSchedule, pserr := cmd.Flags().GetString("default-prune-schedule")
+	checkSchedule, cserr := cmd.Flags().GetString("default-check-schedule")
+
+	if err := multierr.Combine(smerr, mcperr, mcnerr, mckerr, bcerr, bacerr, scherr, pserr, cserr); err != nil {
 		return fmt.Errorf("failed to get flags: %w", err)
+	}
+
+	defaults := backup.Defaults{
+		BucketClassName:       bucketClass,
+		BucketAccessClassName: bucketAccessClass,
+		Schedules: backupsv1.ScheduleSpec{
+			Backup: schedule,
+			Prune:  pruneSchedule,
+			Check:  checkSchedule,
+		},
 	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&zapOpts)))
@@ -102,6 +126,8 @@ func runController(cmd *cobra.Command, _ []string) error {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "ampulla.backups.helmetica.io",
 
+		Cache: controllers.CacheOptions(),
+
 		LeaderElectionReleaseOnCancel: true,
 	})
 	if err != nil {
@@ -109,10 +135,12 @@ func runController(cmd *cobra.Command, _ []string) error {
 	}
 
 	bpm := controllers.BackupPolicyManager{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		Recorder: mgr.GetEventRecorder("backuppolicy-controller"),
-		Log:      mgr.GetLogger().WithName("backuppolicy-controller"),
+		Client:    mgr.GetClient(),
+		Scheme:    mgr.GetScheme(),
+		Recorder:  mgr.GetEventRecorder("backuppolicy-controller"),
+		Log:       mgr.GetLogger().WithName("backuppolicy-controller"),
+		APIReader: mgr.GetAPIReader(),
+		Defaults:  defaults,
 	}
 
 	if err := bpm.SetupWithManager("backuppolicy", mgr); err != nil {

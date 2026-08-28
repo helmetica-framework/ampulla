@@ -1,0 +1,33 @@
+# The storage backups are written to. Both classes come from the COSI driver, not from
+# ampulla: this sample uses the garage operator's driver, which athanor installs together
+# with a single-node Garage cluster, so backups can be exercised without a cloud account.
+#
+# Name them on the controller (--default-bucket-class, --default-bucket-access-class) to
+# make them the default for every policy, or name them on a single BackupPolicy.
+---
+apiVersion: objectstorage.k8s.io/v1alpha2
+kind: BucketClass
+metadata:
+  name: backups
+spec:
+  driverName: garage.rajsingh.info
+  # Retain keeps the bucket when the BucketClaim goes away. For backups that is the safer
+  # default: a bucket outlives the instance whose data it holds.
+  deletionPolicy: Retain
+  parameters:
+    clusterRef: garage
+    clusterNamespace: garage-system
+---
+apiVersion: objectstorage.k8s.io/v1alpha2
+kind: BucketAccessClass
+metadata:
+  name: backups
+spec:
+  driverName: garage.rajsingh.info
+  # Key is the only type Garage supports: it has no IAM. ampulla asks for one key pair per
+  # instance, so a single bucket per access is all it needs.
+  authenticationType: Key
+  multiBucketAccess: SingleBucket
+  parameters:
+    clusterRef: garage
+    clusterNamespace: garage-system

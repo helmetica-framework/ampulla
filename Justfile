@@ -14,8 +14,11 @@ binary:
     @echo "GOOS=$(go env GOOS) GOARCH=$(go env GOARCH)"
     CGO_ENABLED=0 go build -o {{ bin_filename }}
 
-# Run tests
+# Run tests, including the envtest integration tests
 test: manifests generate
+    #!/usr/bin/env bash
+    set -euo pipefail
+    export KUBEBUILDER_ASSETS="$({{ SETUP_ENVTEST }} use {{ ENVTEST_K8S_VERSION }} --bin-dir {{ localbin }} -p path)"
     go test ./... -race -coverprofile cover.tmp.out
     grep -v "zz_generated.deepcopy.go" cover.tmp.out > cover.out
 
@@ -27,6 +30,7 @@ manifests:
 generate: manifests
     go generate ./...
     {{ CONTROLLER_GEN }} object paths="./..."
+    {{ CONTROLLER_GEN }} applyconfiguration paths="./api/..."
 
 # Generate documentation
 docs:
