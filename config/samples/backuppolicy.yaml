@@ -6,7 +6,8 @@ metadata:
   name: orders
   namespace: default
 spec:
-  schedule: "0 2 * * *"
+  schedule:
+    backup: "0 2 * * *"
   retention:
     keepDaily: 7
     keepWeekly: 4

@@ -37,22 +37,9 @@ type BackupPolicySpec struct {
 	// +optional
 	Mode Mode `json:"mode,omitempty"`
 
-	// Schedule is when the backup runs, as a cron expression or one of k8up's shortcuts
-	// such as `@daily-random`. Empty takes the controller's default. Mode Schedule only.
+	// Schedule is when each of the jobs runs. Mode Schedule only.
 	// +optional
-	Schedule string `json:"schedule,omitempty"`
-
-	// PruneSchedule is when old snapshots are forgotten and pruned. Empty takes the
-	// controller's default; a controller default of empty disables pruning entirely.
-	// Mode Schedule only.
-	// +optional
-	PruneSchedule string `json:"pruneSchedule,omitempty"`
-
-	// CheckSchedule is when the backup repository is verified. Empty takes the
-	// controller's default; a controller default of empty disables the check.
-	// Mode Schedule only.
-	// +optional
-	CheckSchedule string `json:"checkSchedule,omitempty"`
+	Schedule ScheduleSpec `json:"schedule,omitempty"`
 
 	// BucketClassName is the object storage the backups are written to. Empty takes the
 	// controller's default; without either, the policy fails rather than being backed up
@@ -69,6 +56,33 @@ type BackupPolicySpec struct {
 	// default retention. Mode Schedule only.
 	// +optional
 	Retention Retention `json:"retention,omitempty"`
+}
+
+// ScheduleSpec is when the k8up jobs run. Every field is a cron expression or one of
+// k8up's shortcuts such as `@daily-random`.
+//
+// An empty field falls back to the controller's default for that job, and removing one
+// from a policy that had it set restores that fallback - and drops the job entirely if the
+// controller has no default for it either.
+type ScheduleSpec struct {
+	// Backup is when the backup itself runs. Falls back to the controller's default.
+	// +optional
+	Backup string `json:"backup,omitempty"`
+
+	// Prune is when old snapshots are forgotten and pruned. Falls back to the controller's
+	// default; with no default configured there, no prune job is scheduled.
+	// +optional
+	Prune string `json:"prune,omitempty"`
+
+	// Check is when the backup repository is verified. Falls back to the controller's
+	// default; with no default configured there, no check job is scheduled.
+	// +optional
+	Check string `json:"check,omitempty"`
+}
+
+// IsZero reports whether no schedule at all was configured.
+func (s ScheduleSpec) IsZero() bool {
+	return s == ScheduleSpec{}
 }
 
 // Retention mirrors restic's forget policy, minus the tag and hostname filters: ampulla

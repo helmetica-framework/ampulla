@@ -29,9 +29,9 @@ overrides one of them:
 | Field | Meaning |
 | --- | --- |
 | `mode` | `Schedule`: ampulla drives k8up. `BucketOnly`: ampulla provisions the bucket and the service backs itself up into it |
-| `schedule` | When the backup runs. Mode `Schedule` only |
-| `pruneSchedule` | When old snapshots are forgotten and pruned. Mode `Schedule` only |
-| `checkSchedule` | When the backup repository is verified. Mode `Schedule` only |
+| `schedule.backup` | When the backup runs. Mode `Schedule` only |
+| `schedule.prune` | When old snapshots are forgotten and pruned. Mode `Schedule` only |
+| `schedule.check` | When the backup repository is verified. Mode `Schedule` only |
 | `retention.keep{Last,Hourly,Daily,Weekly,Monthly,Yearly}` | How many snapshots survive a prune. Mode `Schedule` only |
 | `bucketClassName` | Which object storage the backups land in |
 | `bucketAccessClassName` | Which COSI BucketAccessClass mints the credentials |

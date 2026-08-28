@@ -29,7 +29,7 @@ func TestBackupPolicyDeepCopy(t *testing.T) {
 		},
 		Spec: BackupPolicySpec{
 			Mode:            ModeBucketOnly,
-			Schedule:        "0 2 * * *",
+			Schedule:        ScheduleSpec{Backup: "0 2 * * *", Prune: "0 3 * * 0"},
 			BucketClassName: "backups",
 			Retention:       Retention{KeepDaily: 7},
 		},
@@ -47,6 +47,12 @@ func TestBackupPolicyDeepCopy(t *testing.T) {
 	copied.Spec.Retention.KeepDaily = 14
 	assert.Equal(t, "value", orig.Labels["key"], "the copy shares no maps with the original")
 	assert.Equal(t, 7, orig.Spec.Retention.KeepDaily)
+}
+
+func TestScheduleSpecIsZero(t *testing.T) {
+	assert.True(t, ScheduleSpec{}.IsZero())
+	assert.False(t, ScheduleSpec{Backup: "@daily"}.IsZero())
+	assert.False(t, ScheduleSpec{Check: "@weekly"}.IsZero(), "every field counts, not just the first")
 }
 
 func TestRetentionIsZero(t *testing.T) {

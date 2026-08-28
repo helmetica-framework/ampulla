@@ -70,24 +70,12 @@ spec:
                   controller's default; without either, the policy fails rather than being backed up
                   somewhere arbitrary.
                 type: string
-              checkSchedule:
-                description: |-
-                  CheckSchedule is when the backup repository is verified. Empty takes the
-                  controller's default; a controller default of empty disables the check.
-                  Mode Schedule only.
-                type: string
               mode:
                 default: Schedule
                 description: Mode selects who takes the backups.
                 enum:
                 - Schedule
                 - BucketOnly
-                type: string
-              pruneSchedule:
-                description: |-
-                  PruneSchedule is when old snapshots are forgotten and pruned. Empty takes the
-                  controller's default; a controller default of empty disables pruning entirely.
-                  Mode Schedule only.
                 type: string
               retention:
                 description: |-
@@ -114,10 +102,24 @@ spec:
                     type: integer
                 type: object
               schedule:
-                description: |-
-                  Schedule is when the backup runs, as a cron expression or one of k8up's shortcuts
-                  such as `@daily-random`. Empty takes the controller's default. Mode Schedule only.
-                type: string
+                description: Schedule is when each of the jobs runs. Mode Schedule
+                  only.
+                properties:
+                  backup:
+                    description: Backup is when the backup itself runs. Falls back
+                      to the controller's default.
+                    type: string
+                  check:
+                    description: |-
+                      Check is when the backup repository is verified. Falls back to the controller's
+                      default; with no default configured there, no check job is scheduled.
+                    type: string
+                  prune:
+                    description: |-
+                      Prune is when old snapshots are forgotten and pruned. Falls back to the controller's
+                      default; with no default configured there, no prune job is scheduled.
+                    type: string
+                type: object
             type: object
           status:
             description: |-
