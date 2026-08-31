@@ -1,0 +1,161 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: backuppolicies.backups.helmetica.io
+spec:
+  group: backups.helmetica.io
+  names:
+    kind: BackupPolicy
+    listKind: BackupPolicyList
+    plural: backuppolicies
+    singular: backuppolicy
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.mode
+      name: Mode
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.bucket
+      name: Bucket
+      type: string
+    - jsonPath: .status.message
+      name: Message
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          BackupPolicy asks ampulla to back up the service it sits next to. The policy's own
+          namespace is the whole scope: the bucket is provisioned for it, the credentials land
+          beside it, and in ModeSchedule every persistent volume in the namespace is backed up.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              BackupPolicySpec describes how the service next to it is backed up.
+
+              Every field is optional: an empty spec takes the controller's defaults, which is what a
+              chart renders when its values say no more than that backups are enabled.
+            properties:
+              bucketAccessClassName:
+                description: |-
+                  BucketAccessClassName is the class the bucket credentials are minted from. Empty
+                  takes the controller's default.
+                type: string
+              bucketClassName:
+                description: |-
+                  BucketClassName is the object storage the backups are written to. Empty takes the
+                  controller's default; without either, the policy fails rather than being backed up
+                  somewhere arbitrary.
+                type: string
+              mode:
+                default: Schedule
+                description: Mode selects who takes the backups.
+                enum:
+                - Schedule
+                - BucketOnly
+                type: string
+              retention:
+                description: |-
+                  Retention is how many backups survive a prune. All zero takes the controller's
+                  default retention. Mode Schedule only.
+                properties:
+                  keepDaily:
+                    minimum: 0
+                    type: integer
+                  keepHourly:
+                    minimum: 0
+                    type: integer
+                  keepLast:
+                    minimum: 0
+                    type: integer
+                  keepMonthly:
+                    minimum: 0
+                    type: integer
+                  keepWeekly:
+                    minimum: 0
+                    type: integer
+                  keepYearly:
+                    minimum: 0
+                    type: integer
+                type: object
+              schedule:
+                description: Schedule is when each of the jobs runs. Mode Schedule
+                  only.
+                properties:
+                  backup:
+                    description: Backup is when the backup itself runs. Falls back
+                      to the controller's default.
+                    type: string
+                  check:
+                    description: |-
+                      Check is when the backup repository is verified. Falls back to the controller's
+                      default; with no default configured there, no check job is scheduled.
+                    type: string
+                  prune:
+                    description: |-
+                      Prune is when old snapshots are forgotten and pruned. Falls back to the controller's
+                      default; with no default configured there, no prune job is scheduled.
+                    type: string
+                type: object
+            type: object
+          status:
+            description: |-
+              BackupPolicyStatus is where the bucket's coordinates are published. In ModeBucketOnly
+              they are the whole deliverable: they are how a service's own backup resource is pointed
+              at the storage ampulla provisioned.
+            properties:
+              bucket:
+                description: Bucket is the bucket as clients address it.
+                type: string
+              credentialsSecret:
+                description: |-
+                  CredentialsSecret is the secret in this namespace holding the bucket's key pair,
+                  one value per key. A service that backs itself up reads its S3 credentials there.
+                type: string
+              endpoint:
+                description: Endpoint is the object storage endpoint the bucket lives
+                  behind.
+                type: string
+              message:
+                description: Message explains a Pending or Failed phase.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the spec generation the phase was
+                  computed from.
+                format: int64
+                type: integer
+              phase:
+                type: string
+              schedule:
+                description: Schedule is the schedule the backups run on, once defaults
+                  are resolved.
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
