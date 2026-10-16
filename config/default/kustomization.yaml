@@ -9,7 +9,6 @@ namespace: ampulla-system
 namePrefix: ampulla-
 
 resources:
-- ../crd
 - ../rbac
 - ../manager
 - ../prometheus
