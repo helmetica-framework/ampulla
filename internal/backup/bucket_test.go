@@ -48,7 +48,14 @@ func TestBucketFromSecret_WrongProtocol(t *testing.T) {
 	require.ErrorContains(t, err, "ampulla only backs up to S3")
 
 	_, err = BucketFromSecret(nil)
-	require.ErrorContains(t, err, "ampulla only backs up to S3", "an empty secret is not an S3 bucket either")
+	require.ErrorContains(t, err, "incomplete bucket credentials", "an empty secret is not a usable bucket either")
+}
+
+func TestBucketFromSecret_NoProtocol(t *testing.T) {
+	// The upstream COSI sidecar never writes COSI_PROTOCOL; the BucketAccess asked for S3.
+	bucket, err := BucketFromSecret(secret(map[string]string{ProtocolKey: ""}))
+	require.NoError(t, err)
+	assert.Equal(t, "bucket-8f2a", bucket.ID)
 }
 
 func TestBucketFromSecret_Incomplete(t *testing.T) {
