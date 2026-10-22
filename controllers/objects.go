@@ -89,8 +89,12 @@ func bucketAccessFor(policy *backupsv1.BackupPolicy, owner map[string]any, names
 		"protocol":              protocolS3,
 		"bucketClaims": []any{map[string]any{
 			"bucketClaimName": names.BucketClaim,
-			// Backups are written and pruned, and a restore reads them back.
-			"accessMode":       accessModeReadWrite,
+			// Backups are written and pruned, and a restore reads them back. Only the
+			// objects themselves matter; leaving the metadata categories unset means
+			// ampulla doesn't care whether the key gets them.
+			"accessModes": map[string]any{
+				"objectData": accessModeReadWrite,
+			},
 			"accessSecretName": names.CredentialsSecret,
 		}},
 	}
