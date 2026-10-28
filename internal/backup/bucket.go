@@ -41,8 +41,11 @@ type Bucket struct {
 // it into one clear message on the policy instead.
 func BucketFromSecret(data map[string][]byte) (Bucket, error) {
 	// k8up speaks several protocols; ampulla only wires up S3, which is the one every
-	// driver in the framework provisions.
-	if protocol := string(data[ProtocolKey]); protocol != string(cosiv1alpha2.ObjectProtocolS3) {
+	// driver in the framework provisions. The protocol key may be missing: the upstream
+	// COSI sidecar builds the Secret from the driver's S3 info alone and never writes it,
+	// only drivers that write the Secret themselves (garage) do. ampulla asks for S3 on
+	// the BucketAccess, so a missing key means S3; any other value is still refused.
+	if protocol := string(data[ProtocolKey]); protocol != "" && protocol != string(cosiv1alpha2.ObjectProtocolS3) {
 		return Bucket{}, fmt.Errorf("bucket speaks %q, but ampulla only backs up to S3", protocol)
 	}
 
