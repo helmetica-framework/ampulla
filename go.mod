@@ -6,7 +6,7 @@ go 1.26.5
 // with GOTOOLCHAIN=local, where a `go` directive above the installed toolchain is a hard
 // stop. A toolchain line is ignored in that mode and honoured everywhere else, so local
 // builds keep working while CI and the release build on 1.26.6.
-toolchain go1.26.6
+toolchain go1.27.3
 
 require (
 	github.com/go-logr/logr v1.4.3
@@ -20,6 +20,7 @@ require (
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2
 	sigs.k8s.io/container-object-storage-interface/client v0.0.0-20260806173055-cc544691e2ef
 	sigs.k8s.io/controller-runtime v0.24.1
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.2
 )
 
 require (
@@ -132,7 +133,6 @@ require (
 	sigs.k8s.io/kustomize/kustomize/v5 v5.8.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
