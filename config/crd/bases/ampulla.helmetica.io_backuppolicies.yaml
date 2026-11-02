@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.20.1
-  name: backuppolicies.backups.helmetica.io
+  name: backuppolicies.ampulla.helmetica.io
 spec:
-  group: backups.helmetica.io
+  group: ampulla.helmetica.io
   names:
     kind: BackupPolicy
     listKind: BackupPolicyList

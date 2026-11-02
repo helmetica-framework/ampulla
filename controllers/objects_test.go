@@ -12,18 +12,18 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	cosiv1alpha2 "sigs.k8s.io/container-object-storage-interface/client/apis/objectstorage/v1alpha2"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 	"github.com/helmetica-framework/ampulla/internal/backup"
 )
 
-func testPolicy() *backupsv1.BackupPolicy {
-	return &backupsv1.BackupPolicy{
+func testPolicy() *ampullav1.BackupPolicy {
+	return &ampullav1.BackupPolicy{
 		ObjectMeta: metav1.ObjectMeta{Namespace: "orders", Name: "orders", UID: "policy-uid"},
 	}
 }
 
 func testOwner() map[string]any {
-	return map[string]any{"apiVersion": "backups.helmetica.io/v1", "kind": "BackupPolicy", "name": "orders"}
+	return map[string]any{"apiVersion": "ampulla.helmetica.io/v1", "kind": "BackupPolicy", "name": "orders"}
 }
 
 func testBucket() backup.Bucket {
@@ -62,7 +62,7 @@ func TestControllerRef(t *testing.T) {
 	owner, err := controllerRef(testPolicy(), Scheme())
 	require.NoError(t, err)
 
-	assert.Equal(t, "backups.helmetica.io/v1", owner["apiVersion"])
+	assert.Equal(t, "ampulla.helmetica.io/v1", owner["apiVersion"])
 	assert.Equal(t, "BackupPolicy", owner["kind"])
 	assert.Equal(t, "orders", owner["name"])
 	assert.Equal(t, "policy-uid", owner["uid"], "an owner reference without the UID is rejected")
@@ -72,13 +72,13 @@ func TestControllerRef(t *testing.T) {
 func TestScheduleFor(t *testing.T) {
 	names := backup.NamesFor("orders")
 	cfg := backup.Config{
-		Mode: backupsv1.ModeSchedule,
-		Schedules: backupsv1.ScheduleSpec{
+		Mode: ampullav1.ModeSchedule,
+		Schedules: ampullav1.ScheduleSpec{
 			Backup: "0 2 * * *",
 			Prune:  "0 3 * * 0",
 			Check:  "0 4 * * 0",
 		},
-		Retention: backupsv1.Retention{KeepDaily: 7, KeepMonthly: 6},
+		Retention: ampullav1.Retention{KeepDaily: 7, KeepMonthly: 6},
 	}
 
 	schedule := decode[k8upv1.Schedule](t, scheduleFor(testPolicy(), testOwner(), names, cfg, testBucket()))
@@ -116,8 +116,8 @@ func TestScheduleFor(t *testing.T) {
 
 func TestScheduleFor_WithoutPruneAndCheck(t *testing.T) {
 	cfg := backup.Config{
-		Mode:      backupsv1.ModeSchedule,
-		Schedules: backupsv1.ScheduleSpec{Backup: "0 2 * * *"},
+		Mode:      ampullav1.ModeSchedule,
+		Schedules: ampullav1.ScheduleSpec{Backup: "0 2 * * *"},
 	}
 
 	schedule := decode[k8upv1.Schedule](t,

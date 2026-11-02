@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 )
 
 // Defaults are the cluster-wide settings the operator of the cluster configures on the
@@ -18,7 +18,7 @@ type Defaults struct {
 	BucketAccessClassName string
 
 	// Schedules are the cron expressions k8up runs each of its jobs on.
-	Schedules backupsv1.ScheduleSpec
+	Schedules ampullav1.ScheduleSpec
 }
 
 // DefaultDefaults are the fallbacks for everything an operator does not configure. There
@@ -29,7 +29,7 @@ type Defaults struct {
 // The schedules use k8up's `-random` variants, which spread the jobs of all services over
 // the given window instead of starting every backup in the cluster at the same minute.
 var DefaultDefaults = Defaults{
-	Schedules: backupsv1.ScheduleSpec{
+	Schedules: ampullav1.ScheduleSpec{
 		Backup: "@daily-random",
 		Prune:  "@weekly-random",
 		Check:  "@weekly-random",
@@ -39,18 +39,18 @@ var DefaultDefaults = Defaults{
 // DefaultRetention applies when a policy asks for backups without saying how long to keep
 // them. Every retention field being zero means "keep everything forever" to restic, which
 // is never what an unconfigured policy means.
-var DefaultRetention = backupsv1.Retention{KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 6}
+var DefaultRetention = ampullav1.Retention{KeepDaily: 7, KeepWeekly: 4, KeepMonthly: 6}
 
 // Config is a policy with all defaults resolved.
 type Config struct {
-	Mode backupsv1.Mode
+	Mode ampullav1.Mode
 
-	Schedules backupsv1.ScheduleSpec
+	Schedules ampullav1.ScheduleSpec
 
 	BucketClassName       string
 	BucketAccessClassName string
 
-	Retention backupsv1.Retention
+	Retention ampullav1.Retention
 }
 
 // Resolve fills a policy's empty fields from def.
@@ -58,10 +58,10 @@ type Config struct {
 // A policy that cannot be acted on - no bucket class, no schedule - is an error, because
 // silently not backing up a service whose owner asked for backups is the one outcome this
 // controller must never produce.
-func Resolve(spec backupsv1.BackupPolicySpec, def Defaults) (Config, error) {
+func Resolve(spec ampullav1.BackupPolicySpec, def Defaults) (Config, error) {
 	cfg := Config{
-		Mode: orDefault(spec.Mode, backupsv1.ModeSchedule),
-		Schedules: backupsv1.ScheduleSpec{
+		Mode: orDefault(spec.Mode, ampullav1.ModeSchedule),
+		Schedules: ampullav1.ScheduleSpec{
 			Backup: orDefault(spec.Schedule.Backup, def.Schedules.Backup),
 			Prune:  orDefault(spec.Schedule.Prune, def.Schedules.Prune),
 			Check:  orDefault(spec.Schedule.Check, def.Schedules.Check),
@@ -83,7 +83,7 @@ func Resolve(spec backupsv1.BackupPolicySpec, def Defaults) (Config, error) {
 	}
 	// A schedule is only ampulla's business in ModeSchedule. In ModeBucketOnly the service's
 	// own operator decides when it backs up.
-	if cfg.Mode == backupsv1.ModeSchedule && cfg.Schedules.Backup == "" {
+	if cfg.Mode == ampullav1.ModeSchedule && cfg.Schedules.Backup == "" {
 		errs = append(errs, errors.New("no backup schedule: set .spec.schedule.backup or the controller's --default-schedule"))
 	}
 	if err := errors.Join(errs...); err != nil {

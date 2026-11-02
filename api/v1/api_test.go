@@ -15,7 +15,7 @@ func TestSchemeRegistration(t *testing.T) {
 
 	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackupPolicy")))
 	assert.True(t, scheme.Recognizes(GroupVersion.WithKind("BackupPolicyList")))
-	assert.Equal(t, "backups.helmetica.io", GroupVersion.Group)
+	assert.Equal(t, "ampulla.helmetica.io", GroupVersion.Group)
 	assert.Equal(t, "v1", GroupVersion.Version)
 }
 

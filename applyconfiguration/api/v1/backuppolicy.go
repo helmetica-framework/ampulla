@@ -15,7 +15,7 @@ import (
 // namespace is the whole scope: the bucket is provisioned for it, the credentials land
 // beside it, and in ModeSchedule every persistent volume in the namespace is backed up.
 type BackupPolicyApplyConfiguration struct {
-	metav1.TypeMetaApplyConfiguration    `json:",inline"`
+	metav1.TypeMetaApplyConfiguration    `json:""`
 	*metav1.ObjectMetaApplyConfiguration `json:"metadata,omitempty"`
 	Spec                                 *BackupPolicySpecApplyConfiguration   `json:"spec,omitempty"`
 	Status                               *BackupPolicyStatusApplyConfiguration `json:"status,omitempty"`
@@ -28,7 +28,7 @@ func BackupPolicy(name, namespace string) *BackupPolicyApplyConfiguration {
 	b.WithName(name)
 	b.WithNamespace(namespace)
 	b.WithKind("BackupPolicy")
-	b.WithAPIVersion("backups.helmetica.io/v1")
+	b.WithAPIVersion("ampulla.helmetica.io/v1")
 	return b
 }
 

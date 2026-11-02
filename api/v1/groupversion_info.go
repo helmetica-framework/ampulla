@@ -1,8 +1,8 @@
-// Package v1 contains API Schema definitions for the backups.helmetica.io v1 API group
+// Package v1 contains API Schema definitions for the ampulla.helmetica.io v1 API group
 // +kubebuilder:object:generate=true
 // +kubebuilder:ac:generate=true
 // +kubebuilder:ac:output:package="../../applyconfiguration"
-// +groupName=backups.helmetica.io
+// +groupName=ampulla.helmetica.io
 package v1
 
 import (
@@ -12,7 +12,7 @@ import (
 
 var (
 	// GroupVersion is group version used to register these objects
-	GroupVersion = schema.GroupVersion{Group: "backups.helmetica.io", Version: "v1"}
+	GroupVersion = schema.GroupVersion{Group: "ampulla.helmetica.io", Version: "v1"}
 
 	// SchemeBuilder is used to add go types to the GroupVersionKind scheme
 	SchemeBuilder = &scheme.Builder{GroupVersion: GroupVersion}

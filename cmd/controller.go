@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 	"github.com/helmetica-framework/ampulla/controllers"
 	"github.com/helmetica-framework/ampulla/internal/backup"
 )
@@ -80,7 +80,7 @@ func runController(cmd *cobra.Command, _ []string) error {
 	defaults := backup.Defaults{
 		BucketClassName:       bucketClass,
 		BucketAccessClassName: bucketAccessClass,
-		Schedules: backupsv1.ScheduleSpec{
+		Schedules: ampullav1.ScheduleSpec{
 			Backup: schedule,
 			Prune:  pruneSchedule,
 			Check:  checkSchedule,
@@ -124,7 +124,7 @@ func runController(cmd *cobra.Command, _ []string) error {
 		Metrics:                metricsServerOptions,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "ampulla.backups.helmetica.io",
+		LeaderElectionID:       "ampulla.helmetica.io",
 
 		Cache: controllers.CacheOptions(),
 

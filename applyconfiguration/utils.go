@@ -15,7 +15,7 @@ import (
 // apply configuration type exists for the given GroupVersionKind.
 func ForKind(kind schema.GroupVersionKind) interface{} {
 	switch kind {
-	// Group=backups.helmetica.io, Version=v1
+	// Group=ampulla.helmetica.io, Version=v1
 	case v1.SchemeGroupVersion.WithKind("BackupPolicy"):
 		return &apiv1.BackupPolicyApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("BackupPolicySpec"):

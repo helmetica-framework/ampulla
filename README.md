@@ -25,7 +25,7 @@ Everything ampulla creates is owned by the policy and lives beside it, so a dele
 The policy is the entire contract. It carries no reference to whatever created it:
 
 ```yaml
-apiVersion: backups.helmetica.io/v1
+apiVersion: ampulla.helmetica.io/v1
 kind: BackupPolicy
 metadata:
   name: orders

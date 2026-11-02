@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 	"github.com/helmetica-framework/ampulla/controllers"
 	"github.com/helmetica-framework/ampulla/internal/backup"
 	"github.com/helmetica-framework/ampulla/testutil"
@@ -32,7 +32,7 @@ const (
 var testDefaults = backup.Defaults{
 	BucketClassName:       "test-class",
 	BucketAccessClassName: "test-class",
-	Schedules: backupsv1.ScheduleSpec{
+	Schedules: ampullav1.ScheduleSpec{
 		Backup: "0 2 * * *",
 		Prune:  "0 3 * * 0",
 		Check:  "0 4 * * 0",
@@ -46,7 +46,7 @@ func TestBackupPolicy(t *testing.T) {
 	ctx := t.Context()
 
 	ns := testutil.TmpNamespace(t, c)
-	policy := newPolicy(ns, "orders", backupsv1.BackupPolicySpec{})
+	policy := newPolicy(ns, "orders", ampullav1.BackupPolicySpec{})
 	require.NoError(t, c.Create(ctx, policy))
 
 	names := backup.NamesFor("orders")
@@ -93,9 +93,9 @@ func TestBackupPolicy(t *testing.T) {
 	assert.NotEmpty(t, password, "restic needs a repository password")
 
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		current := &backupsv1.BackupPolicy{}
+		current := &ampullav1.BackupPolicy{}
 		assert.NoError(t, c.Get(ctx, client.ObjectKeyFromObject(policy), current))
-		assert.Equal(t, backupsv1.BackupPolicyPhaseReady, current.Status.Phase)
+		assert.Equal(t, ampullav1.BackupPolicyPhaseReady, current.Status.Phase)
 		assert.Equal(t, current.Generation, current.Status.ObservedGeneration)
 		assert.Equal(t, "bucket-8f2a", current.Status.Bucket)
 		assert.Equal(t, names.CredentialsSecret, current.Status.CredentialsSecret)
@@ -114,7 +114,7 @@ func TestBackupPolicy(t *testing.T) {
 	})
 
 	t.Run("switching to BucketOnly removes the Schedule", func(t *testing.T) {
-		setSpec(t, c, policy, backupsv1.BackupPolicySpec{Mode: backupsv1.ModeBucketOnly})
+		setSpec(t, c, policy, ampullav1.BackupPolicySpec{Mode: ampullav1.ModeBucketOnly})
 
 		require.EventuallyWithT(t, func(t *assert.CollectT) {
 			err := c.Get(ctx, client.ObjectKey{Namespace: ns, Name: names.Schedule}, &k8upv1.Schedule{})
@@ -122,9 +122,9 @@ func TestBackupPolicy(t *testing.T) {
 		}, eventually, tick, "k8up must not keep backing up volumes the service now handles itself")
 
 		require.EventuallyWithT(t, func(t *assert.CollectT) {
-			current := &backupsv1.BackupPolicy{}
+			current := &ampullav1.BackupPolicy{}
 			assert.NoError(t, c.Get(ctx, client.ObjectKeyFromObject(policy), current))
-			assert.Equal(t, backupsv1.BackupPolicyPhaseReady, current.Status.Phase)
+			assert.Equal(t, ampullav1.BackupPolicyPhaseReady, current.Status.Phase)
 			assert.Empty(t, current.Status.Schedule)
 			assert.Equal(t, names.CredentialsSecret, current.Status.CredentialsSecret,
 				"the coordinates are the deliverable in this mode")
@@ -135,17 +135,17 @@ func TestBackupPolicy(t *testing.T) {
 // TestBackupPolicy_NotActionable covers the case that must never fail silently: backups
 // asked for, but no bucket class anywhere to provision them from.
 func TestBackupPolicy_NotActionable(t *testing.T) {
-	c := setup(t, backup.Defaults{Schedules: backupsv1.ScheduleSpec{Backup: "0 2 * * *"}})
+	c := setup(t, backup.Defaults{Schedules: ampullav1.ScheduleSpec{Backup: "0 2 * * *"}})
 	ctx := t.Context()
 
 	ns := testutil.TmpNamespace(t, c)
-	policy := newPolicy(ns, "unconfigured", backupsv1.BackupPolicySpec{})
+	policy := newPolicy(ns, "unconfigured", ampullav1.BackupPolicySpec{})
 	require.NoError(t, c.Create(ctx, policy))
 
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
-		current := &backupsv1.BackupPolicy{}
+		current := &ampullav1.BackupPolicy{}
 		assert.NoError(t, c.Get(ctx, client.ObjectKeyFromObject(policy), current))
-		assert.Equal(t, backupsv1.BackupPolicyPhaseFailed, current.Status.Phase)
+		assert.Equal(t, ampullav1.BackupPolicyPhaseFailed, current.Status.Phase)
 		assert.Contains(t, current.Status.Message, "no BucketClass")
 	}, eventually, tick, "the policy says why it is not being backed up")
 
@@ -200,18 +200,18 @@ func setup(t *testing.T, defaults backup.Defaults) client.Client {
 	return c
 }
 
-func newPolicy(namespace, name string, spec backupsv1.BackupPolicySpec) *backupsv1.BackupPolicy {
-	return &backupsv1.BackupPolicy{
+func newPolicy(namespace, name string, spec ampullav1.BackupPolicySpec) *ampullav1.BackupPolicy {
+	return &ampullav1.BackupPolicy{
 		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name},
 		Spec:       spec,
 	}
 }
 
-func setSpec(t *testing.T, c client.Client, policy *backupsv1.BackupPolicy, spec backupsv1.BackupPolicySpec) {
+func setSpec(t *testing.T, c client.Client, policy *ampullav1.BackupPolicy, spec ampullav1.BackupPolicySpec) {
 	t.Helper()
 
 	require.NoError(t, retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		current := &backupsv1.BackupPolicy{}
+		current := &ampullav1.BackupPolicy{}
 		if err := c.Get(t.Context(), client.ObjectKeyFromObject(policy), current); err != nil {
 			return err
 		}
@@ -221,11 +221,11 @@ func setSpec(t *testing.T, c client.Client, policy *backupsv1.BackupPolicy, spec
 }
 
 // touch forces a reconcile without changing the policy.
-func touch(t *testing.T, c client.Client, policy *backupsv1.BackupPolicy) {
+func touch(t *testing.T, c client.Client, policy *ampullav1.BackupPolicy) {
 	t.Helper()
 
 	require.NoError(t, retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		current := &backupsv1.BackupPolicy{}
+		current := &ampullav1.BackupPolicy{}
 		if err := c.Get(t.Context(), client.ObjectKeyFromObject(policy), current); err != nil {
 			return err
 		}
@@ -289,14 +289,14 @@ func TestBackupPolicy_RemovingASchedule(t *testing.T) {
 	defaults := backup.Defaults{
 		BucketClassName:       "test-class",
 		BucketAccessClassName: "test-class",
-		Schedules:             backupsv1.ScheduleSpec{Backup: "0 2 * * *"},
+		Schedules:             ampullav1.ScheduleSpec{Backup: "0 2 * * *"},
 	}
 	c := setup(t, defaults)
 	ctx := t.Context()
 
 	ns := testutil.TmpNamespace(t, c)
-	policy := newPolicy(ns, "orders", backupsv1.BackupPolicySpec{
-		Schedule: backupsv1.ScheduleSpec{Prune: "0 3 * * 0", Check: "0 4 * * 0"},
+	policy := newPolicy(ns, "orders", ampullav1.BackupPolicySpec{
+		Schedule: ampullav1.ScheduleSpec{Prune: "0 3 * * 0", Check: "0 4 * * 0"},
 	})
 	require.NoError(t, c.Create(ctx, policy))
 
@@ -313,7 +313,7 @@ func TestBackupPolicy_RemovingASchedule(t *testing.T) {
 		assert.NotNil(t, schedule.Spec.Check)
 	}, eventually, tick, "both jobs are scheduled while the policy asks for them")
 
-	setSpec(t, c, policy, backupsv1.BackupPolicySpec{})
+	setSpec(t, c, policy, ampullav1.BackupPolicySpec{})
 
 	require.EventuallyWithT(t, func(t *assert.CollectT) {
 		if !assert.NoError(t, c.Get(ctx, scheduleKey, schedule)) {
