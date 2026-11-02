@@ -1,6 +1,6 @@
 # What a reagent's chart renders when its values ask for backups. Everything below the
 # name is optional: an empty spec takes the controller's defaults.
-apiVersion: backups.helmetica.io/v1
+apiVersion: ampulla.helmetica.io/v1
 kind: BackupPolicy
 metadata:
   name: orders
@@ -15,7 +15,7 @@ spec:
 ---
 # A service whose own operator writes backups to S3: ampulla provisions the bucket and the
 # credentials and leaves the backing up to the service.
-apiVersion: backups.helmetica.io/v1
+apiVersion: ampulla.helmetica.io/v1
 kind: BackupPolicy
 metadata:
   name: ledger

@@ -8,12 +8,12 @@ metadata:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
 rules:
 - apiGroups:
-  - backups.helmetica.io
+  - ampulla.helmetica.io
   resources:
   - backuppolicies
   verbs: [create, delete, get, list, patch, update, watch]
 - apiGroups:
-  - backups.helmetica.io
+  - ampulla.helmetica.io
   resources:
   - backuppolicies/status
   verbs: [get]

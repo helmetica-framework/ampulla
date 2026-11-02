@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 	backupsacv1 "github.com/helmetica-framework/ampulla/applyconfiguration/api/v1"
 	"github.com/helmetica-framework/ampulla/internal/backup"
 )
@@ -78,14 +78,14 @@ type BackupPolicyManager struct {
 
 // phase is what a reconcile concluded, plus how long to wait before looking again.
 type phase struct {
-	Phase   backupsv1.BackupPolicyPhase
+	Phase   ampullav1.BackupPolicyPhase
 	Message string
-	Status  backupsv1.BackupPolicyStatus
+	Status  ampullav1.BackupPolicyStatus
 	Requeue time.Duration
 }
 
-// +kubebuilder:rbac:groups=backups.helmetica.io,resources=backuppolicies,verbs=get;list;watch
-// +kubebuilder:rbac:groups=backups.helmetica.io,resources=backuppolicies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=ampulla.helmetica.io,resources=backuppolicies,verbs=get;list;watch
+// +kubebuilder:rbac:groups=ampulla.helmetica.io,resources=backuppolicies/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=events.k8s.io,resources=events,verbs=create;patch
 // +kubebuilder:rbac:groups=objectstorage.k8s.io,resources=bucketclaims;bucketaccesses,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=k8up.io,resources=schedules,verbs=get;list;watch;create;update;patch;delete
@@ -96,7 +96,7 @@ type phase struct {
 func (r *BackupPolicyManager) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("backuppolicy", req.NamespacedName)
 
-	policy := &backupsv1.BackupPolicy{}
+	policy := &ampullav1.BackupPolicy{}
 	err := r.Get(ctx, req.NamespacedName, policy)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -142,7 +142,7 @@ func (r *BackupPolicyManager) Reconcile(ctx context.Context, req ctrl.Request) (
 
 // statusFor is the status as an apply configuration. Only the fields that carry something
 // are set: an empty one would be applied as an explicit empty string and owned as such.
-func statusFor(status backupsv1.BackupPolicyStatus) *backupsacv1.BackupPolicyStatusApplyConfiguration {
+func statusFor(status ampullav1.BackupPolicyStatus) *backupsacv1.BackupPolicyStatusApplyConfiguration {
 	ac := backupsacv1.BackupPolicyStatus().
 		WithPhase(status.Phase).
 		WithObservedGeneration(status.ObservedGeneration)
@@ -168,13 +168,13 @@ func statusFor(status backupsv1.BackupPolicyStatus) *backupsacv1.BackupPolicySta
 // desiredPhase provisions what the policy asks for and reports how far it got. Each early
 // return is a state COSI has to leave before there is anything more to do, and the watches
 // on the claim and the access are what bring the controller back.
-func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger, policy *backupsv1.BackupPolicy) (phase, error) {
+func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger, policy *ampullav1.BackupPolicy) (phase, error) {
 	cfg, err := backup.Resolve(policy.Spec, r.Defaults)
 	if err != nil {
 		// A rejected policy needs a spec change to become valid, and a spec change
 		// reconciles again. Requeueing with backoff would only repeat the same failure.
 		r.Recorder.Eventf(policy, nil, corev1.EventTypeWarning, "NotActionable", "Backup", "%s", err)
-		return phase{Phase: backupsv1.BackupPolicyPhaseFailed, Message: err.Error()}, nil
+		return phase{Phase: ampullav1.BackupPolicyPhaseFailed, Message: err.Error()}, nil
 	}
 
 	names := backup.NamesFor(policy.Name)
@@ -196,7 +196,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 	if !ptr.Deref(claim.Status.ReadyToUse, false) {
 		log.V(1).Info("waiting for COSI to provision the bucket", "bucketClaim", claim.Name)
 		return phase{
-			Phase:   backupsv1.BackupPolicyPhasePending,
+			Phase:   ampullav1.BackupPolicyPhasePending,
 			Message: waitMessage("waiting for the bucket to be provisioned", claim.Status.Error),
 		}, nil
 	}
@@ -211,9 +211,9 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 	if !ptr.Deref(access.Status.ReadyToUse, false) {
 		log.V(1).Info("waiting for COSI to grant access to the bucket", "bucketAccess", access.Name)
 		return phase{
-			Phase:   backupsv1.BackupPolicyPhasePending,
+			Phase:   ampullav1.BackupPolicyPhasePending,
 			Message: waitMessage("waiting for the bucket credentials", access.Status.Error),
-			Status:  backupsv1.BackupPolicyStatus{Bucket: claim.Status.BoundBucketName},
+			Status:  ampullav1.BackupPolicyStatus{Bucket: claim.Status.BoundBucketName},
 		}, nil
 	}
 
@@ -224,7 +224,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 			// a race with our own cache-free read rather than a real problem.
 			log.V(1).Info("credentials secret not written yet, retrying", "secret", names.CredentialsSecret)
 			return phase{
-				Phase:   backupsv1.BackupPolicyPhasePending,
+				Phase:   ampullav1.BackupPolicyPhasePending,
 				Message: "waiting for the bucket credentials",
 				Requeue: credentialsRetry,
 			}, nil
@@ -232,13 +232,13 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 		return phase{}, err
 	}
 
-	status := backupsv1.BackupPolicyStatus{
+	status := ampullav1.BackupPolicyStatus{
 		Bucket:            bucket.ID,
 		Endpoint:          bucket.Endpoint,
 		CredentialsSecret: names.CredentialsSecret,
 	}
 
-	if cfg.Mode == backupsv1.ModeBucketOnly {
+	if cfg.Mode == ampullav1.ModeBucketOnly {
 		// The service backs itself up into this bucket. Nothing else to create - and if the
 		// policy used to run in ModeSchedule, the schedule has to go, or k8up would keep
 		// backing up volumes the service is now handling itself.
@@ -246,7 +246,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 			return phase{}, err
 		}
 		return phase{
-			Phase:   backupsv1.BackupPolicyPhaseReady,
+			Phase:   ampullav1.BackupPolicyPhaseReady,
 			Message: fmt.Sprintf("bucket %s is ready for the service to back up to", bucket.ID),
 			Status:  status,
 			Requeue: resyncInterval,
@@ -263,7 +263,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 
 	status.Schedule = cfg.Schedules.Backup
 	return phase{
-		Phase:   backupsv1.BackupPolicyPhaseReady,
+		Phase:   ampullav1.BackupPolicyPhaseReady,
 		Message: fmt.Sprintf("backing up to %s in %s", bucket.ID, bucket.Endpoint),
 		Status:  status,
 		Requeue: resyncInterval,
@@ -313,7 +313,7 @@ func (r *BackupPolicyManager) bucket(ctx context.Context, namespace, name string
 // ensureRepositoryPassword creates the restic repository password once and then leaves it
 // alone. Rewriting it would leave every existing snapshot in the bucket unreadable, so
 // this is the one object here that is created rather than applied.
-func (r *BackupPolicyManager) ensureRepositoryPassword(ctx context.Context, log logr.Logger, policy *backupsv1.BackupPolicy, name string) error {
+func (r *BackupPolicyManager) ensureRepositoryPassword(ctx context.Context, log logr.Logger, policy *ampullav1.BackupPolicy, name string) error {
 	existing := &corev1.Secret{}
 	err := r.Get(ctx, client.ObjectKey{Namespace: policy.Namespace, Name: name}, existing)
 	if err == nil {
@@ -363,7 +363,7 @@ func (r *BackupPolicyManager) applyOwned(ctx context.Context, obj *unstructured.
 func (r *BackupPolicyManager) SetupWithManager(name string, mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named(name).
-		For(&backupsv1.BackupPolicy{}).
+		For(&ampullav1.BackupPolicy{}).
 		Owns(&cosiv1alpha2.BucketClaim{}).
 		Owns(&cosiv1alpha2.BucketAccess{}).
 		Owns(&k8upv1.Schedule{}).

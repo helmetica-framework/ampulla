@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 
-	backupsv1 "github.com/helmetica-framework/ampulla/api/v1"
+	ampullav1 "github.com/helmetica-framework/ampulla/api/v1"
 	"github.com/helmetica-framework/ampulla/internal/backup"
 )
 
@@ -26,7 +26,7 @@ import (
 // objectMeta is the metadata of the one object ampulla creates rather than applies: the
 // repository password secret, which is written once and never rewritten, so it stays a
 // typed object with a typed owner reference.
-func objectMeta(policy *backupsv1.BackupPolicy, name string) metav1.ObjectMeta {
+func objectMeta(policy *ampullav1.BackupPolicy, name string) metav1.ObjectMeta {
 	return metav1.ObjectMeta{
 		Namespace: policy.Namespace,
 		Name:      name,
@@ -37,7 +37,7 @@ func objectMeta(policy *backupsv1.BackupPolicy, name string) metav1.ObjectMeta {
 // objectFor is the shell every applied object shares: the policy's namespace, a label the
 // manager's cache filters on, and the policy as controller so a deleted policy takes the
 // object with it.
-func objectFor(policy *backupsv1.BackupPolicy, owner map[string]any, apiVersion, kind, name string) *unstructured.Unstructured {
+func objectFor(policy *ampullav1.BackupPolicy, owner map[string]any, apiVersion, kind, name string) *unstructured.Unstructured {
 	return &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": apiVersion,
 		"kind":       kind,
@@ -53,7 +53,7 @@ func objectFor(policy *backupsv1.BackupPolicy, owner map[string]any, apiVersion,
 // controllerRef is the policy as a controller owner reference.
 // controllerutil.SetControllerReference cannot be used: it takes a metav1.Object, and what
 // is being built here is an apply configuration rather than an API object.
-func controllerRef(policy *backupsv1.BackupPolicy, scheme *runtime.Scheme) (map[string]any, error) {
+func controllerRef(policy *ampullav1.BackupPolicy, scheme *runtime.Scheme) (map[string]any, error) {
 	gvk, err := apiutil.GVKForObject(policy, scheme)
 	if err != nil {
 		return nil, fmt.Errorf("looking up the policy's GVK: %w", err)
@@ -69,7 +69,7 @@ func controllerRef(policy *backupsv1.BackupPolicy, scheme *runtime.Scheme) (map[
 	}, nil
 }
 
-func bucketClaimFor(policy *backupsv1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config) *unstructured.Unstructured {
+func bucketClaimFor(policy *ampullav1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config) *unstructured.Unstructured {
 	claim := objectFor(policy, owner, cosiAPIVersion, "BucketClaim", names.BucketClaim)
 
 	claim.Object["spec"] = map[string]any{
@@ -81,7 +81,7 @@ func bucketClaimFor(policy *backupsv1.BackupPolicy, owner map[string]any, names 
 
 // bucketAccessFor asks for one key pair on the policy's bucket. A BucketAccess can cover
 // several claims; ampulla never needs that, because one policy owns exactly one bucket.
-func bucketAccessFor(policy *backupsv1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config) *unstructured.Unstructured {
+func bucketAccessFor(policy *ampullav1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config) *unstructured.Unstructured {
 	access := objectFor(policy, owner, cosiAPIVersion, "BucketAccess", names.BucketAccess)
 
 	access.Object["spec"] = map[string]any{
@@ -104,7 +104,7 @@ func bucketAccessFor(policy *backupsv1.BackupPolicy, owner map[string]any, names
 // The backend reads the access key straight out of the Secret COSI wrote: v1alpha2 stores
 // each piece of bucket info under its own key, which is the shape k8up's secret references
 // need.
-func scheduleFor(policy *backupsv1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config, bucket backup.Bucket) *unstructured.Unstructured {
+func scheduleFor(policy *ampullav1.BackupPolicy, owner map[string]any, names backup.Names, cfg backup.Config, bucket backup.Bucket) *unstructured.Unstructured {
 	schedule := objectFor(policy, owner, k8upAPIVersion, "Schedule", names.Schedule)
 
 	credential := func(key string) map[string]any {
@@ -148,7 +148,7 @@ func scheduleFor(policy *backupsv1.BackupPolicy, owner map[string]any, names bac
 //
 // The counts are int64 because that is the only integer an unstructured object holds; an
 // int would be rejected when the apply is serialised.
-func retentionFor(retention backupsv1.Retention) map[string]any {
+func retentionFor(retention ampullav1.Retention) map[string]any {
 	counts := map[string]int{
 		"keepLast":    retention.KeepLast,
 		"keepHourly":  retention.KeepHourly,
