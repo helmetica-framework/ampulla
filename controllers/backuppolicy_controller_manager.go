@@ -156,6 +156,9 @@ func statusFor(status ampullav1.BackupPolicyStatus) *backupsacv1.BackupPolicySta
 	if status.Endpoint != "" {
 		ac.WithEndpoint(status.Endpoint)
 	}
+	if status.Region != "" {
+		ac.WithRegion(status.Region)
+	}
 	if status.CredentialsSecret != "" {
 		ac.WithCredentialsSecret(status.CredentialsSecret)
 	}
@@ -235,6 +238,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 	status := ampullav1.BackupPolicyStatus{
 		Bucket:            bucket.ID,
 		Endpoint:          bucket.Endpoint,
+		Region:            bucket.Region,
 		CredentialsSecret: names.CredentialsSecret,
 	}
 

@@ -57,6 +57,7 @@ $ kubectl get backuppolicy orders -o jsonpath='{.status}' | jq
   "observedGeneration": 1,
   "bucket": "bucket-8f2a1c...",
   "endpoint": "http://garage-s3.garage-system.svc:3900",
+  "region": "garage",
   "credentialsSecret": "orders-backup-credentials",
   "schedule": "0 2 * * *",
   "message": "Backing up to bucket-8f2a1c... in http://garage-s3.garage-system.svc:3900"
@@ -86,12 +87,68 @@ running database taken next to a consistent one.
 
 `mode: BucketOnly` provisions the bucket and its credentials and stops — no `Schedule`, no
 restic repository password, and `schedule`/`retention` are ignored. What the service needs
-is in `.status`: `bucket`, `endpoint` and `credentialsSecret`. That Secret holds one key
+is in `.status`: `bucket`, `endpoint`, `region` and `credentialsSecret`. That Secret holds one key
 per value (`COSI_S3_ACCESS_KEY_ID`, `COSI_S3_ACCESS_SECRET_KEY`, …), which is the shape
 both of those operators want for their S3 credentials, so their CRs reference it directly
 and no credential is copied anywhere. Note that most operators want the endpoint as
 `host:port` plus a separate TLS flag, while COSI publishes a URL; the scheme has to be
 stripped.
+
+### Templating the service's backup resource
+
+A `BackupTemplate` writes that backup resource for the service, rendered with a policy's
+bucket. The chart renders everything it knows — schedule, retention, the database to back
+up — and leaves placeholders for what only exists at runtime. They are filled from the named
+policy's status once it is `Ready`, and say what a value is rather than where COSI keeps
+it: a chart only needs to know its own operator's resource.
+
+| Placeholder | Value |
+| --- | --- |
+| `${s3.bucket}` | the bucket name |
+| `${s3.url}` | the endpoint as a URL |
+| `${s3.hostPort}` | the endpoint without its scheme, the `host:port` most operators want |
+| `${s3.region}` | the region S3 requests are signed for |
+| `${s3.tls}` | `true` if the endpoint is `https://`, else `false` |
+| `${s3.accessKeyRef}` | `{name, key}` of the access key id in the credentials secret |
+| `${s3.secretKeyRef}` | `{name, key}` of the secret access key in the credentials secret |
+
+The first four may be part of any string. The last three are not strings, so they only
+stand for a whole value.
+
+```yaml
+apiVersion: ampulla.helmetica.io/v1
+kind: BackupTemplate
+metadata:
+  name: ledger-mariadb
+spec:
+  policyName: ledger
+  template:
+    apiVersion: k8s.mariadb.com/v1alpha1
+    kind: PhysicalBackup
+    metadata:
+      name: ledger
+    spec:
+      storage:
+        s3:
+          bucket: ${s3.bucket}
+          endpoint: ${s3.hostPort}
+          region: ${s3.region}
+          tls:
+            enabled: ${s3.tls}
+          accessKeyIdSecretKeyRef: ${s3.accessKeyRef}
+          secretAccessKeySecretKeyRef: ${s3.secretKeyRef}
+```
+
+The rendered object is owned by the template, so deleting the template deletes it.
+
+ampulla has no access to the operators' kinds itself. It writes the rendered object as the
+ServiceAccount `--template-service-account` (default `instance-admin`) in the template's
+namespace, so a template can only write what that account may. In the framework that is
+the account chrysopoeia deploys the chart with, which already has full access to the CRDs
+of every dependency group the instance `requires`. A template that account may not write
+goes to phase `Failed`. ampulla's ClusterRole allows impersonating ServiceAccounts of that
+name only, so changing the flag means changing the role too. See
+`config/samples/backuptemplate.yaml` for examples.
 
 Switching a policy from `Schedule` to `BucketOnly` deletes the k8up Schedule and keeps the
 bucket and the repository password, so switching back does not orphan the snapshots

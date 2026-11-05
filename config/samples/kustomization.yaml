@@ -1,3 +1,4 @@
 resources:
 - bucketclass.yaml
 - backuppolicy.yaml
+- backuptemplate.yaml

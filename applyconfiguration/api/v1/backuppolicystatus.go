@@ -22,6 +22,8 @@ type BackupPolicyStatusApplyConfiguration struct {
 	Bucket *string `json:"bucket,omitempty"`
 	// Endpoint is the object storage endpoint the bucket lives behind.
 	Endpoint *string `json:"endpoint,omitempty"`
+	// Region is where the bucket lives.
+	Region *string `json:"region,omitempty"`
 	// CredentialsSecret is the secret in this namespace holding the bucket's key pair,
 	// one value per key. A service that backs itself up reads its S3 credentials there.
 	CredentialsSecret *string `json:"credentialsSecret,omitempty"`
@@ -72,6 +74,14 @@ func (b *BackupPolicyStatusApplyConfiguration) WithBucket(value string) *BackupP
 // If called multiple times, the Endpoint field is set to the value of the last call.
 func (b *BackupPolicyStatusApplyConfiguration) WithEndpoint(value string) *BackupPolicyStatusApplyConfiguration {
 	b.Endpoint = &value
+	return b
+}
+
+// WithRegion sets the Region field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Region field is set to the value of the last call.
+func (b *BackupPolicyStatusApplyConfiguration) WithRegion(value string) *BackupPolicyStatusApplyConfiguration {
+	b.Region = &value
 	return b
 }
 
