@@ -98,6 +98,7 @@ func TestBackupPolicy(t *testing.T) {
 		assert.Equal(t, ampullav1.BackupPolicyPhaseReady, current.Status.Phase)
 		assert.Equal(t, current.Generation, current.Status.ObservedGeneration)
 		assert.Equal(t, "bucket-8f2a", current.Status.Bucket)
+		assert.Equal(t, "garage", current.Status.Region)
 		assert.Equal(t, names.CredentialsSecret, current.Status.CredentialsSecret)
 		assert.Equal(t, "0 2 * * *", current.Status.Schedule)
 	}, eventually, tick, "the policy reports where its backups go")
@@ -183,6 +184,16 @@ func setup(t *testing.T, defaults backup.Defaults) client.Client {
 	// Controller names are globally unique within the process, and every test starts its
 	// own manager.
 	require.NoError(t, bpm.SetupWithManager("backuppolicy-"+t.Name(), mgr))
+
+	btm := controllers.BackupTemplateManager{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		Recorder:       mgr.GetEventRecorder("backuptemplate-controller"),
+		Log:            mgr.GetLogger().WithName("backuptemplate-controller"),
+		Config:         cfg,
+		ServiceAccount: templateServiceAccount,
+	}
+	require.NoError(t, btm.SetupWithManager("backuptemplate-"+t.Name(), mgr))
 
 	ctx, cancel := context.WithCancel(t.Context())
 	stopped := make(chan struct{})

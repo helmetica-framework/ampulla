@@ -1,0 +1,93 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.20.1
+  name: backuptemplates.ampulla.helmetica.io
+spec:
+  group: ampulla.helmetica.io
+  names:
+    kind: BackupTemplate
+    listKind: BackupTemplateList
+    plural: backuptemplates
+    singular: backuptemplate
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.policyName
+      name: Policy
+      type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
+    - jsonPath: .status.message
+      name: Message
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: |-
+          BackupTemplate renders a backup resource for an operator that backs its service up
+          itself, pointed at the bucket a BackupPolicy provisioned.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: |-
+              BackupTemplateSpec is the backup resource of a service whose own operator takes the
+              backups, rendered with the bucket of a BackupPolicy.
+            properties:
+              policyName:
+                description: |-
+                  PolicyName is the BackupPolicy in this namespace whose bucket the template is
+                  rendered with.
+                minLength: 1
+                type: string
+              template:
+                description: |-
+                  Template is the object to write, always into this namespace and owned by the
+                  template, so deleting the template deletes it as well. Placeholders in it are
+                  filled from the policy's status. ${s3.bucket}, ${s3.url}, ${s3.hostPort} and
+                  ${s3.region} may be part of any string. ${s3.tls} (a boolean) and ${s3.accessKeyRef}
+                  and ${s3.secretKeyRef} (each a `{name, key}` secret reference) only as a whole value.
+                type: object
+                x-kubernetes-embedded-resource: true
+                x-kubernetes-preserve-unknown-fields: true
+            required:
+            - policyName
+            - template
+            type: object
+          status:
+            properties:
+              message:
+                description: Message explains a Pending or Failed phase.
+                type: string
+              observedGeneration:
+                description: ObservedGeneration is the spec generation the phase was
+                  computed from.
+                format: int64
+                type: integer
+              phase:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

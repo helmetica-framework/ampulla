@@ -132,6 +132,9 @@ type BackupPolicyStatus struct {
 	// Endpoint is the object storage endpoint the bucket lives behind.
 	// +optional
 	Endpoint string `json:"endpoint,omitempty"`
+	// Region is where the bucket lives.
+	// +optional
+	Region string `json:"region,omitempty"`
 	// CredentialsSecret is the secret in this namespace holding the bucket's key pair,
 	// one value per key. A service that backs itself up reads its S3 credentials there.
 	// +optional

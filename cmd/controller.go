@@ -52,6 +52,7 @@ func init() {
 	controllerCmd.Flags().String("default-schedule", backup.DefaultDefaults.Schedules.Backup, "The k8up schedule backups run on, for instances that set none themselves.")
 	controllerCmd.Flags().String("default-prune-schedule", backup.DefaultDefaults.Schedules.Prune, "The k8up schedule old snapshots are pruned on. Empty disables pruning.")
 	controllerCmd.Flags().String("default-check-schedule", backup.DefaultDefaults.Schedules.Check, "The k8up schedule the restic repository is checked on. Empty disables checks.")
+	controllerCmd.Flags().String("template-service-account", "instance-admin", "The ServiceAccount impersonated in a BackupTemplate's namespace to write the rendered object. ampulla's ClusterRole only allows impersonating instance-admin.")
 }
 
 var controllerCmd = &cobra.Command{
@@ -72,8 +73,9 @@ func runController(cmd *cobra.Command, _ []string) error {
 	schedule, scherr := cmd.Flags().GetString("default-schedule")
 	pruneSchedule, pserr := cmd.Flags().GetString("default-prune-schedule")
 	checkSchedule, cserr := cmd.Flags().GetString("default-check-schedule")
+	templateServiceAccount, tsaerr := cmd.Flags().GetString("template-service-account")
 
-	if err := multierr.Combine(smerr, mcperr, mcnerr, mckerr, bcerr, bacerr, scherr, pserr, cserr); err != nil {
+	if err := multierr.Combine(smerr, mcperr, mcnerr, mckerr, bcerr, bacerr, scherr, pserr, cserr, tsaerr); err != nil {
 		return fmt.Errorf("failed to get flags: %w", err)
 	}
 
@@ -145,6 +147,19 @@ func runController(cmd *cobra.Command, _ []string) error {
 
 	if err := bpm.SetupWithManager("backuppolicy", mgr); err != nil {
 		return fmt.Errorf("unable to create BackupPolicy controller: %w", err)
+	}
+
+	btm := controllers.BackupTemplateManager{
+		Client:         mgr.GetClient(),
+		Scheme:         mgr.GetScheme(),
+		Recorder:       mgr.GetEventRecorder("backuptemplate-controller"),
+		Log:            mgr.GetLogger().WithName("backuptemplate-controller"),
+		Config:         mgr.GetConfig(),
+		ServiceAccount: templateServiceAccount,
+	}
+
+	if err := btm.SetupWithManager("backuptemplate", mgr); err != nil {
+		return fmt.Errorf("unable to create BackupTemplate controller: %w", err)
 	}
 
 	if metricsCertWatcher != nil {
