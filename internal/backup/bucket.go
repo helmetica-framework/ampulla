@@ -29,8 +29,8 @@ type Bucket struct {
 	ID string
 	// Endpoint is the S3 endpoint the bucket lives behind.
 	Endpoint string
-	// Region is reported by the driver. k8up's S3 backend has no field for it; it is kept
-	// for the instance's status and for error messages.
+	// Region is reported by the driver. k8up's S3 backend has no field for it; it is
+	// published in the policy's status for operators that sign their requests with it.
 	Region string
 }
 

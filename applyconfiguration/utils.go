@@ -22,6 +22,12 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &apiv1.BackupPolicySpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("BackupPolicyStatus"):
 		return &apiv1.BackupPolicyStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("BackupTemplate"):
+		return &apiv1.BackupTemplateApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("BackupTemplateSpec"):
+		return &apiv1.BackupTemplateSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("BackupTemplateStatus"):
+		return &apiv1.BackupTemplateStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("Retention"):
 		return &apiv1.RetentionApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ScheduleSpec"):

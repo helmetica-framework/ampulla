@@ -1,5 +1,6 @@
 resources:
 - bases/ampulla.helmetica.io_backuppolicies.yaml
+- bases/ampulla.helmetica.io_backuptemplates.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 configurations:

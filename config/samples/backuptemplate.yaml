@@ -1,0 +1,59 @@
+# A mariadb-operator PhysicalBackup into the bucket of the `ledger` BucketOnly policy.
+# Schedule and retention come from the chart's values; the ${...} placeholders are filled
+# from the policy's status at runtime.
+apiVersion: ampulla.helmetica.io/v1
+kind: BackupTemplate
+metadata:
+  name: ledger-mariadb
+  namespace: default
+spec:
+  policyName: ledger
+  template:
+    apiVersion: k8s.mariadb.com/v1alpha1
+    kind: PhysicalBackup
+    metadata:
+      name: ledger
+    spec:
+      mariaDbRef:
+        name: ledger
+      schedule:
+        cron: "0 2 * * *"
+      maxRetention: 168h
+      storage:
+        s3:
+          bucket: ${s3.bucket}
+          endpoint: ${s3.hostPort}
+          region: ${s3.region}
+          tls:
+            enabled: ${s3.tls}
+          accessKeyIdSecretKeyRef: ${s3.accessKeyRef}
+          secretAccessKeySecretKeyRef: ${s3.secretKeyRef}
+---
+# The barman-cloud ObjectStore of a CNPG Cluster deployed by the chart. The chart points the
+# Cluster at it itself, since that reference carries nothing from the bucket:
+#
+#   plugins:
+#     - name: barman-cloud.cloudnative-pg.io
+#       isWALArchiver: true
+#       parameters:
+#         barmanObjectName: orders
+apiVersion: ampulla.helmetica.io/v1
+kind: BackupTemplate
+metadata:
+  name: orders-cnpg
+  namespace: default
+spec:
+  policyName: ledger
+  template:
+    apiVersion: barmancloud.cnpg.io/v1
+    kind: ObjectStore
+    metadata:
+      name: orders
+    spec:
+      retentionPolicy: 30d
+      configuration:
+        destinationPath: s3://${s3.bucket}/
+        endpointURL: ${s3.url}
+        s3Credentials:
+          accessKeyId: ${s3.accessKeyRef}
+          secretAccessKey: ${s3.secretKeyRef}
