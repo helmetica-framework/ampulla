@@ -149,6 +149,9 @@ spec:
                 type: integer
               phase:
                 type: string
+              region:
+                description: Region is where the bucket lives.
+                type: string
               schedule:
                 description: Schedule is the schedule the backups run on, once defaults
                   are resolved.

@@ -16,9 +16,18 @@ rules:
   - update
   - watch
 - apiGroups:
+  - ""
+  resourceNames:
+  - instance-admin
+  resources:
+  - serviceaccounts
+  verbs:
+  - impersonate
+- apiGroups:
   - ampulla.helmetica.io
   resources:
   - backuppolicies
+  - backuptemplates
   verbs:
   - get
   - list
@@ -27,6 +36,7 @@ rules:
   - ampulla.helmetica.io
   resources:
   - backuppolicies/status
+  - backuptemplates/status
   verbs:
   - get
   - patch

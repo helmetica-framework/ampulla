@@ -38,10 +38,10 @@ const (
 	// repoPasswordKey is the key of the restic repository password in the generated secret.
 	repoPasswordKey = "password"
 
-	// fieldOwner is the field manager of everything ampulla applies. Server-side apply
+	// fieldOwner is the field manager of everything this controller applies. Server-side apply
 	// tracks ownership under this name, which is what lets a field the policy stopped
 	// asking for be removed rather than left behind.
-	fieldOwner = client.FieldOwner("ampulla")
+	fieldOwner = client.FieldOwner("ampulla:backuppolicy")
 
 	// resyncInterval re-reconciles a ready policy. Nothing watches the COSI credentials
 	// secret - it is written by COSI itself and carries none of ampulla's labels, so it is
@@ -156,6 +156,9 @@ func statusFor(status ampullav1.BackupPolicyStatus) *backupsacv1.BackupPolicySta
 	if status.Endpoint != "" {
 		ac.WithEndpoint(status.Endpoint)
 	}
+	if status.Region != "" {
+		ac.WithRegion(status.Region)
+	}
 	if status.CredentialsSecret != "" {
 		ac.WithCredentialsSecret(status.CredentialsSecret)
 	}
@@ -235,6 +238,7 @@ func (r *BackupPolicyManager) desiredPhase(ctx context.Context, log logr.Logger,
 	status := ampullav1.BackupPolicyStatus{
 		Bucket:            bucket.ID,
 		Endpoint:          bucket.Endpoint,
+		Region:            bucket.Region,
 		CredentialsSecret: names.CredentialsSecret,
 	}
 

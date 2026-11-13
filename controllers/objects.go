@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -165,4 +166,18 @@ func retentionFor(retention ampullav1.Retention) map[string]any {
 		}
 	}
 	return set
+}
+
+// templateObject is the object a BackupTemplate describes, pinned to the template's
+// namespace.
+func templateObject(tmpl *ampullav1.BackupTemplate) (*unstructured.Unstructured, error) {
+	obj := &unstructured.Unstructured{}
+	if err := obj.UnmarshalJSON(tmpl.Spec.Template.Raw); err != nil {
+		return nil, fmt.Errorf("parsing the template: %w", err)
+	}
+	if obj.GetName() == "" {
+		return nil, errors.New("the template has no metadata.name")
+	}
+	obj.SetNamespace(tmpl.Namespace)
+	return obj, nil
 }
