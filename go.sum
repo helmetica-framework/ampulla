@@ -296,8 +296,8 @@ sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0 h1:/YpDJ4vReG7Zm
 sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.36.0/go.mod h1:tJo1aepTXyR+8Xs3sUsGBDk4Ub2AM5dPAPKJx0mpm5c=
 sigs.k8s.io/container-object-storage-interface/client v0.0.0-20260806173055-cc544691e2ef h1:WKLlR+7C1JZ+Ze/7FZGZUjH6hHw+rjTP1y3aoBVCYOE=
 sigs.k8s.io/container-object-storage-interface/client v0.0.0-20260806173055-cc544691e2ef/go.mod h1:P+KGLV8lkdaFbI3M3mUBHNfsDPCR3S7y/37KUnC3aIg=
-sigs.k8s.io/controller-runtime v0.25.2 h1:bEkK3PVOIVK9X8QWLGVhJgmFc++47vfT6wakSzAOLsQ=
-sigs.k8s.io/controller-runtime v0.25.2/go.mod h1:4QqLdT6z/L6Olj8JJCtvztid4/fnIiYsfaTFScegctc=
+sigs.k8s.io/controller-runtime v0.25.3 h1:b4OcZSY/aKHY8JG+rBlQmQ1xLs574+ZBEjv1dtfLd80=
+sigs.k8s.io/controller-runtime v0.25.3/go.mod h1:4QqLdT6z/L6Olj8JJCtvztid4/fnIiYsfaTFScegctc=
 sigs.k8s.io/controller-runtime/tools/setup-envtest v0.24.1 h1:l2AjyGE/PWub6EB165ij4/bpCK0TlY5NlhzIHfmGvmg=
 sigs.k8s.io/controller-runtime/tools/setup-envtest v0.24.1/go.mod h1:wpkYufRHTSw9ABET21/PkEL7kdGnmiZJ6o72t9p/1I8=
 sigs.k8s.io/controller-tools v0.20.1 h1:gkfMt9YodI0K85oT8rVi80NTXO/kDmabKR5Ajn5GYxs=
