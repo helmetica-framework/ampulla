@@ -141,7 +141,7 @@ func TestBucketClaimAndAccessFor(t *testing.T) {
 	assert.Equal(t, cosiv1alpha2.ObjectProtocolS3, access.Spec.Protocol)
 	assert.Equal(t, []cosiv1alpha2.BucketClaimAccess{{
 		BucketClaimName:  names.BucketClaim,
-		AccessMode:       cosiv1alpha2.BucketAccessModeReadWrite,
+		AccessModes:      cosiv1alpha2.BucketAccessModes{ObjectData: cosiv1alpha2.BucketAccessModeReadWrite},
 		AccessSecretName: names.CredentialsSecret,
 	}}, access.Spec.BucketClaims, "one policy, one bucket, one key pair")
 }

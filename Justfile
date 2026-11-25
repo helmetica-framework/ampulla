@@ -67,9 +67,9 @@ deploy-kind: (build-docker "dev")
     kubectl -n {{ NAMESPACE }} rollout restart deployment/{{ bin_filename }}-controller-manager
     kubectl -n {{ NAMESPACE }} rollout status deployment/{{ bin_filename }}-controller-manager --timeout=120s
 
-# Run the controller from your host
-run: manifests generate fmt vet
-    go run main.go controller
+# Run the controller from your host, extra args go to the controller
+run *ARGS: manifests generate fmt vet
+    go run main.go controller {{ ARGS }}
 
 # Clean up the generated resources
 clean:
