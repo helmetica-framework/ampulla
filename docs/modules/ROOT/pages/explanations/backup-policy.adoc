@@ -1,0 +1,82 @@
+= Asking for backups
+
+The policy is the entire contract. It carries no reference to whatever created it:
+
+[source,yaml]
+----
+apiVersion: ampulla.helmetica.io/v1
+kind: BackupPolicy
+metadata:
+  name: orders
+spec: {}
+----
+
+An empty spec is a complete policy — it takes the controller's defaults. Each field
+overrides one of them:
+
+[cols="1,1,1",options="header"]
+|===
+|Field |Default |Meaning
+
+|`mode`
+|`Schedule`
+|`Schedule`: ampulla drives k8up. `BucketOnly`: ampulla provisions the bucket and the service backs itself up into it
+
+|`schedule.backup`
+|`--default-schedule` (`@daily-random`)
+|When the backup runs
+
+|`schedule.prune`
+|`--default-prune-schedule` (`@weekly-random`)
+|When old snapshots are forgotten and pruned. Empty means no prune job
+
+|`schedule.check`
+|`--default-check-schedule` (`@weekly-random`)
+|When the restic repository is verified. Empty means no check job
+
+|`retention.keep{Last,Hourly,Daily,Weekly,Monthly,Yearly}`
+|`keepDaily: 7`, `keepWeekly: 4`, `keepMonthly: 6`
+|How many snapshots survive a prune
+
+|`bucketClassName`
+|`--default-bucket-class`
+|Which object storage the backups land in
+
+|`bucketAccessClassName`
+|`--default-bucket-access-class`
+|Which COSI BucketAccessClass mints the credentials
+|===
+
+The `-random` schedules are k8up's: they spread the jobs of every service in the cluster
+over the window instead of starting every backup in the same minute.
+
+The result is reported back on the policy:
+
+[source,console]
+----
+$ kubectl get backuppolicy orders -o jsonpath='{.status}' | jq
+{
+  "phase": "Ready",
+  "observedGeneration": 1,
+  "bucket": "bucket-8f2a1c...",
+  "endpoint": "http://garage-s3.garage-system.svc:3900",
+  "region": "garage",
+  "credentialsSecret": "orders-backup-credentials",
+  "schedule": "0 2 * * *",
+  "message": "Backing up to bucket-8f2a1c... in http://garage-s3.garage-system.svc:3900"
+}
+----
+
+== Where the policy comes from
+
+Nothing in ampulla creates policies. In the framework a reagent's chart renders one from
+its own values — the https://github.com/helmetica-framework/ferment[ferment] starter
+chart every reagent is scaffolded from ships the template and the values block, so a
+service's owner writes `backup.enabled: true` and the chart does the rest. Helm puts the
+policy in the release namespace, which is where the service and its volumes already are.
+
+That chart is the only thing ampulla and the rest of the framework have in common. ampulla
+has no dependency on the controller that generated the service's API, does not watch its
+resources, and cannot tell whether one exists.
+
+Applying a policy by hand works just as well, which is what the tests do.

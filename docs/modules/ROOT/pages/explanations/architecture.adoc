@@ -1,0 +1,23 @@
+= Design notes
+
+*ampulla never handles the credentials.* COSI v1alpha2 writes the bucket info and the key
+pair into one Secret, a key per value, which is the shape k8up's secret references want.
+The Schedule points straight at that Secret, so the key pair goes from COSI to the backup
+job without being copied anywhere. ampulla reads the Secret only for the endpoint and the
+bucket id, which it needs to fill in the backend.
+
+*The repository password is created once and never rewritten.* It is generated on the
+first reconcile and then left alone: overwriting it would leave every snapshot already in
+the bucket unreadable.
+
+*What becomes of a deleted bucket is the driver's business.* Deleting a policy deletes
+its BucketClaim, and from there the `BucketClass` deletion policy decides: `Retain` keeps
+the bucket, `Delete` hands it to the driver. Whether a driver will delete a bucket that
+still holds objects is up to the driver — `aludel-cloudscale` takes a
+`bucketDeletionPolicy: DeleteAll` parameter that empties it first; the garage operator
+refuses a non-empty bucket outright, so use `Retain` with it until it grows the same
+option. ampulla deliberately does not empty buckets itself: it only ever holds a borrowed
+credential that the driver revokes the moment a `BucketAccess` is marked for deletion.
+
+*One policy, one bucket, one repository.* No sharing, no prefixes, nothing to keep apart
+inside a bucket — which is why the retention policy carries no tag or hostname filters.

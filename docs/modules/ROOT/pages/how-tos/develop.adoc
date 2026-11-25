@@ -1,0 +1,13 @@
+= Develop
+
+[source,console]
+----
+just build        # build the binary
+just test         # unit tests and envtest integration tests
+just build-docker # container image
+just run          # run against the cluster in your current kubeconfig
+----
+
+`just --list` shows every recipe. `just test` needs no third-party CRDs checked into this
+repo: COSI's and k8up's are read out of the module cache of the two Go dependencies that
+already ship them, and ampulla's own comes from `config/crd`.

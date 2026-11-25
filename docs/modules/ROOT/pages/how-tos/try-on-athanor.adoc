@@ -1,0 +1,36 @@
+= Try it on athanor
+
+From the athanor devcontainer, with the cluster up (`just ignite`). k8up, COSI and the
+garage operator's driver are all part of `just ignite`, and nothing here talks to a cloud
+provider: the buckets are real buckets in the Garage cluster running next door.
+
+*1. Build and side-load ampulla:*
+
+[source,console]
+----
+just deploy-kind
+----
+
+This builds the image, `kind load`s it into the `athanor` cluster, applies the CRD and
+rolls out the deployment. Re-run it after every change. The `config/dev` overlay defaults
+the controller to athanor's `garage` classes, so a policy only has to exist.
+
+*2. Ask for backups* — either by setting `backup.enabled: true` on a service whose chart
+renders a policy, or by applying one directly:
+
+[source,console]
+----
+kubectl apply -f config/samples/backuppolicy.yaml
+kubectl get backuppolicies
+kubectl -n ampulla-system logs deployment/ampulla-controller-manager -f
+----
+
+[source,console]
+----
+NAME     MODE       PHASE   BUCKET             MESSAGE
+orders   Schedule   Ready   bucket-8f2a1c...   backing up to bucket-8f2a1c... in http://…
+----
+
+Everything else lands in the same namespace as the policy: `kubectl get
+bucketclaims,bucketaccesses,schedules`. Once k8up has run, the snapshots show up as
+`kubectl get snapshots`.

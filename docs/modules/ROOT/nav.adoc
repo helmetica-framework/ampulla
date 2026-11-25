@@ -1,0 +1,15 @@
+* xref:index.adoc[Overview]
+
+.Explanations
+* xref:explanations/backup-policy.adoc[Asking for backups]
+* xref:explanations/bucket-only.adoc[Services that back themselves up]
+* xref:explanations/architecture.adoc[Design notes]
+* xref:explanations/status.adoc[Status]
+
+.How-tos
+* xref:how-tos/install.adoc[Install]
+* xref:how-tos/try-on-athanor.adoc[Try it on athanor]
+* xref:how-tos/develop.adoc[Develop]
+
+.References
+* xref:references/configuration.adoc[references/configuration.adoc]
