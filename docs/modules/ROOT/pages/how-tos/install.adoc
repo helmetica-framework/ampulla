@@ -1,0 +1,16 @@
+= Install
+
+* *COSI* (`objectstorage.k8s.io/v1alpha2`) — the CRDs, the central controller, and a
+  driver, plus a `BucketClass` and a `BucketAccessClass` to provision from. athanor ships
+  all of it: the garage operator's driver backed by a single-node Garage cluster.
+* *k8up*, which runs the Schedules. Not needed for `BucketOnly` policies.
+
+Nothing else is required of the cluster. ampulla's CRD carries ClusterRoles that aggregate
+into the built-in `admin`, `edit` and `view` roles, so whoever is allowed to deploy a
+service into a namespace is allowed to manage the BackupPolicy its chart renders there —
+Kubernetes hides custom resources from those roles unless a controller opts them in.
+
+There is no default bucket class. Which object storage a customer's data ends up in is not
+a decision to guess at, so a policy without a class named either on itself or on the
+controller is rejected — the policy goes to phase `Failed` with the reason in `.status.message` — rather than backed up
+somewhere arbitrary.

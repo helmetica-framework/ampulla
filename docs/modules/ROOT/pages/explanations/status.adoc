@@ -1,0 +1,5 @@
+= Status
+
+Pre-alpha, and so is COSI. This targets COSI *v1alpha2*, which upstream serves only from
+`main` — the dependency is pinned to the same revision the garage operator builds against,
+so athanor's cluster and this controller speak the same API — and k8up v2.

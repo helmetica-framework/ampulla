@@ -1,0 +1,22 @@
+= Ampulla
+
+_An ampulla is a small sealed vessel: you put something in it that you intend to_
+_still have later._
+
+`ampulla` backs up the services of the https://github.com/helmetica-framework[helmetica]
+framework. A service asks to be backed up by having a `BackupPolicy` next to it, and
+ampulla provisions the storage and the schedule that fill it:
+
+[source,text]
+----
+BackupPolicy (in the service's namespace)
+        │
+        ├─► BucketClaim ──► (COSI driver) ──► a bucket
+        ├─► BucketAccess ─► (COSI driver) ──► Secret: endpoint, bucket id, key pair
+        ├─► Secret ────────────────────────────────────────► restic repository password
+        └─► k8up Schedule ─► backs up every PVC in the namespace,
+                             reading the key pair out of COSI's Secret
+----
+
+Everything ampulla creates is owned by the policy and lives beside it, so a deleted policy
+— or a deleted namespace — takes the lot with it through ordinary garbage collection.
